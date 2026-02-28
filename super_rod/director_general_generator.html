@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grand Marshal — Official Document Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --crimson: #7A0000;
+  --red: #9B0000;
+  --gold: #B8860B;
+  --bright-gold: #D4A017;
+  --pale-gold: #E8D080;
+  --parchment: #F5EDD8;
+  --parchment-dark: #EDE0C4;
+  --ink: #1A0800;
+  --mid: #4A3010;
+}
+
+body {
+  background: #0E0800;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(80,20,0,.3) 0%, transparent 60%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.006) 0,rgba(255,255,255,.006) 1px,transparent 1px,transparent 80px),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.006) 0,rgba(255,255,255,.006) 1px,transparent 1px,transparent 80px);
+  font-family: 'IM Fell English', Georgia, serif;
+  padding: 30px 20px 60px;
+  min-height: 100vh;
+}
+
+/* ── Page header ── */
+.app-title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.app-title h1 {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(1rem, 3vw, 1.6rem);
+  color: #D4A017;
+  letter-spacing: .12em;
+  text-shadow: 0 0 25px rgba(212,160,23,.3);
+}
+.app-title p {
+  font-family: 'Special Elite', monospace;
+  font-size: .62rem;
+  letter-spacing: .42em;
+  color: #6A5020;
+  margin-top: 5px;
+}
+.app-rule { height: 2px; background: linear-gradient(90deg,transparent,#7A0000 20%,#D4A017 50%,#7A0000 80%,transparent); margin: 10px 0; }
+.app-rule.thin { height: 1px; margin: 3px 0; }
+
+/* ── Layout ── */
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  max-width: 1300px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ── Input panel ── */
+.input-panel {
+  background: rgba(20,10,0,.7);
+  border: 1px solid rgba(184,134,11,.25);
+  padding: 20px;
+  position: sticky;
+  top: 20px;
+}
+.input-panel h2 {
+  font-family: 'Cinzel', serif;
+  font-size: .85rem;
+  letter-spacing: .3em;
+  color: #D4A017;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(184,134,11,.3);
+}
+.field-group { margin-bottom: 14px; }
+.field-group label {
+  display: block;
+  font-family: 'Special Elite', monospace;
+  font-size: .6rem;
+  letter-spacing: .35em;
+  color: #8A6830;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.field-group input,
+.field-group select,
+.field-group textarea {
+  width: 100%;
+  background: rgba(10,5,0,.7);
+  border: 1px solid rgba(184,134,11,.3);
+  color: #E8D080;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: .88rem;
+  padding: 7px 10px;
+  outline: none;
+  resize: vertical;
+  transition: border-color .2s;
+}
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus {
+  border-color: rgba(184,134,11,.7);
+}
+.field-group select option { background: #1A0A00; color: #E8D080; }
+.field-group textarea { min-height: 70px; line-height: 1.5; }
+
+.section-divider {
+  font-family: 'Special Elite', monospace;
+  font-size: .58rem;
+  letter-spacing: .4em;
+  color: #7A0000;
+  text-align: center;
+  padding: 8px 0;
+  margin: 8px 0;
+  border-top: 1px solid rgba(122,0,0,.3);
+  border-bottom: 1px solid rgba(122,0,0,.3);
+}
+
+/* ── Buttons ── */
+.btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.btn {
+  font-family: 'Special Elite', monospace;
+  font-size: .68rem;
+  letter-spacing: .3em;
+  padding: 10px 14px;
+  cursor: pointer;
+  border: 1px solid;
+  text-transform: uppercase;
+  transition: all .2s;
+  text-align: center;
+}
+.btn-primary { background: #7A0000; border-color: #D4A017; color: #E8D080; }
+.btn-primary:hover { background: #9B0000; }
+.btn-secondary { background: transparent; border-color: rgba(184,134,11,.4); color: #8A6830; }
+.btn-secondary:hover { border-color: #D4A017; color: #D4A017; }
+.btn.busy { opacity: .5; pointer-events: none; }
+
+/* ══════════════════════════════════════
+   DOCUMENT PREVIEW
+══════════════════════════════════════ */
+.doc-wrap {
+  background: #888;
+  padding: 20px;
+  box-shadow: 0 20px 80px rgba(0,0,0,.8);
+}
+
+#document {
+  width: 816px; /* US letter at 96dpi */
+  min-height: 1056px;
+  background: var(--parchment);
+  background-image:
+    radial-gradient(ellipse 120% 40% at 50% 0%, rgba(230,200,130,.25) 0%, transparent 50%),
+    radial-gradient(ellipse 120% 40% at 50% 100%, rgba(200,170,100,.2) 0%, transparent 50%),
+    repeating-linear-gradient(0deg, rgba(139,96,0,.04) 0, rgba(139,96,0,.04) 1px, transparent 1px, transparent 28px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+  color: var(--ink);
+  font-family: 'IM Fell English', Georgia, serif;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Aged corner darkening */
+#document::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 0 0, rgba(100,60,0,.12) 0%, transparent 22%),
+    radial-gradient(circle at 100% 0, rgba(100,60,0,.12) 0%, transparent 22%),
+    radial-gradient(circle at 0 100%, rgba(100,60,0,.12) 0%, transparent 22%),
+    radial-gradient(circle at 100% 100%, rgba(100,60,0,.12) 0%, transparent 22%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Document Header ── */
+.doc-header {
+  padding: 22px 48px 0;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.doc-header-top-rule {
+  height: 5px;
+  background: linear-gradient(90deg, var(--crimson), #B00000 40%, var(--crimson));
+  margin-bottom: 2px;
+}
+.doc-header-gold-rule {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold) 15%, var(--bright-gold) 50%, var(--gold) 85%, transparent);
+  margin-bottom: 10px;
+}
+
+.doc-header-nation {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .35em;
+  color: var(--crimson);
+  text-transform: uppercase;
+  padding: 4px 0 6px;
+}
+
+.doc-header-seal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 6px 0 8px;
+  gap: 12px;
+}
+.doc-header-seal {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+.doc-header-center {
+  flex: 1;
+  text-align: center;
+}
+.doc-header-center .office-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--crimson);
+  letter-spacing: .12em;
+  line-height: 1.3;
+}
+.doc-header-center .office-sub {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: .08em;
+  margin-top: 2px;
+}
+
+.doc-header-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--gold);
+}
+.doc-header-meta .meta-field {
+  font-family: 'Special Elite', monospace;
+  font-size: 9px;
+  color: var(--mid);
+  letter-spacing: .05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.doc-header-meta .meta-field span {
+  color: var(--crimson);
+  font-weight: bold;
+}
+.doc-header-meta .meta-field.right { text-align: right; }
+.doc-header-meta .meta-field.center { text-align: center; }
+
+.doc-header-class-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding: 4px 0;
+  border-top: 1px solid rgba(184,134,11,.4);
+  border-bottom: 3px solid var(--crimson);
+  padding-bottom: 6px;
+  margin-bottom: 0;
+}
+.doc-header-class-row .class-label {
+  font-family: 'Special Elite', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  color: var(--mid);
+}
+.classification-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .25em;
+  padding: 2px 10px;
+  border: 1.5px solid;
+}
+.classification-badge.open     { color: #2A6020; border-color: #2A6020; }
+.classification-badge.restricted { color: var(--gold); border-color: var(--gold); }
+.classification-badge.eyes-only { color: var(--crimson); border-color: var(--crimson); }
+
+/* ── Document Body ── */
+.doc-body {
+  padding: 20px 48px;
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.doc-invocation {
+  font-family: 'IM Fell English', serif;
+  font-size: 11.5px;
+  color: var(--ink);
+  line-height: 1.65;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(184,134,11,.5);
+}
+.doc-invocation strong { color: var(--crimson); font-style: normal; }
+
+.doc-section { margin-bottom: 16px; }
+.doc-section-heading {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(184,134,11,.3);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.doc-section-heading .roman {
+  color: var(--crimson);
+  font-size: 11px;
+}
+.doc-section-content {
+  font-family: 'IM Fell English', serif;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--ink);
+  white-space: pre-wrap;
+  min-height: 24px;
+}
+.doc-section-content.empty {
+  color: rgba(74,48,16,.35);
+  font-style: italic;
+}
+
+/* ── Signature Block ── */
+.doc-signature {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(122,0,0,.4);
+  display: flex;
+  justify-content: flex-end;
+}
+.doc-signature-inner {
+  text-align: right;
+  width: 320px;
+}
+.doc-sig-issued {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 10.5px;
+  color: var(--mid);
+  margin-bottom: 4px;
+}
+.doc-sig-date {
+  font-family: 'IM Fell English', serif;
+  font-size: 10.5px;
+  color: var(--mid);
+  margin-bottom: 18px;
+}
+.doc-sig-line {
+  border-bottom: 1.5px solid var(--crimson);
+  margin-bottom: 4px;
+}
+.doc-sig-name {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--crimson);
+  letter-spacing: .08em;
+}
+.doc-sig-title {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 10px;
+  color: var(--mid);
+  line-height: 1.5;
+}
+
+/* ── Document Footer ── */
+.doc-footer {
+  padding: 10px 48px 16px;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+.doc-footer-top-rule {
+  height: 3px;
+  background: var(--crimson);
+  margin-bottom: 2px;
+}
+.doc-footer-gold-rule {
+  height: 1px;
+  background: linear-gradient(90deg,transparent,var(--gold) 15%,var(--bright-gold) 50%,var(--gold) 85%,transparent);
+  margin-bottom: 7px;
+}
+.doc-footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.doc-footer-motto {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 9.5px;
+  color: var(--gold);
+  letter-spacing: .08em;
+}
+.doc-footer-page {
+  font-family: 'Special Elite', monospace;
+  font-size: 9px;
+  color: var(--mid);
+  letter-spacing: .1em;
+}
+.doc-footer-official {
+  font-family: 'Special Elite', monospace;
+  font-size: 9px;
+  font-weight: bold;
+  color: var(--crimson);
+  letter-spacing: .12em;
+}
+.doc-footer-sigs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.doc-footer-sig-field {
+  font-family: 'Special Elite', monospace;
+  font-size: 8.5px;
+  color: var(--mid);
+  letter-spacing: .06em;
+  border-bottom: 1px solid rgba(74,48,16,.4);
+  padding-bottom: 2px;
+  width: 48%;
+}
+.doc-footer-authority {
+  text-align: center;
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 8.5px;
+  color: rgba(74,48,16,.6);
+  border-top: 1px solid rgba(184,134,11,.25);
+  padding-top: 5px;
+  margin-top: 4px;
+}
+.doc-footer-bottom-rule {
+  height: 3px;
+  background: linear-gradient(90deg, var(--crimson), #B00000 40%, var(--crimson));
+  margin-top: 6px;
+}
+</style>
+</head>
+<body>
+
+<div class="app-title">
+  <div class="app-rule thin"></div>
+  <div class="app-rule"></div>
+  <h1>◆ Director General · Official Document Generator ◆</h1>
+  <p>⚔ SUPER ROD · BRUSANICA · FORT RODIUM ⚔</p>
+  <div class="app-rule"></div>
+  <div class="app-rule thin"></div>
+</div>
+
+<div class="layout">
+
+  <!-- ── INPUT PANEL ── -->
+  <aside class="input-panel">
+    <h2>⚔ Fill In Fields</h2>
+
+    <div class="field-group">
+      <label>To</label>
+      <input type="text" id="f-to" placeholder="All Liberators / Director-General Nick…" value="">
+    </div>
+    <div class="field-group">
+      <label>CC</label>
+      <input type="text" id="f-cc" placeholder="High Command Council…" value="">
+    </div>
+    <div class="field-group">
+      <label>Subject</label>
+      <input type="text" id="f-subject" placeholder="Declaration of War / Promotion / Edict…" value="">
+    </div>
+    <div class="field-group">
+      <label>Ref No.</label>
+      <input type="text" id="f-ref" placeholder="SR-HC-001" value="">
+    </div>
+    <div class="field-group">
+      <label>Date</label>
+      <input type="text" id="f-date" placeholder="Day of the Rod, Year IV" value="">
+    </div>
+    <div class="field-group">
+      <label>Classification</label>
+      <select id="f-class">
+        <option value="open">OPEN</option>
+        <option value="restricted">RESTRICTED</option>
+        <option value="eyes-only">EYES ONLY</option>
+      </select>
+    </div>
+
+    <div class="section-divider">◆ BODY ◆</div>
+
+    <div class="field-group">
+      <label>I — Proclamation / Decree / Order</label>
+      <textarea id="f-s1" rows="4" placeholder="Write the main proclamation or decree here…"></textarea>
+    </div>
+    <div class="field-group">
+      <label>II — Justification & Authority</label>
+      <textarea id="f-s2" rows="3" placeholder="By the authority vested in…"></textarea>
+    </div>
+    <div class="field-group">
+      <label>III — Orders to be Carried Out</label>
+      <textarea id="f-s3" rows="3" placeholder="All Liberators shall…"></textarea>
+    </div>
+    <div class="field-group">
+      <label>IV — Additional Notes</label>
+      <textarea id="f-s4" rows="2" placeholder="Further notes…"></textarea>
+    </div>
+
+    <div class="section-divider">◆ SIGNATURE ◆</div>
+
+    <div class="field-group">
+      <label>Director-General Name / Title</label>
+      <input type="text" id="f-marshal" placeholder="Director-General of Super Rod" value="Director-General of Super Rod">
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="capture()">📸 GENERATE & DOWNLOAD</button>
+      <button class="btn btn-secondary" onclick="reset()">↺ CLEAR ALL FIELDS</button>
+    </div>
+  </aside>
+
+  <!-- ── DOCUMENT PREVIEW ── -->
+  <main class="doc-wrap">
+    <div id="document">
+
+      <!-- HEADER -->
+      <header class="doc-header">
+        <div class="doc-header-top-rule"></div>
+        <div class="doc-header-gold-rule"></div>
+
+        <div class="doc-header-nation">
+          ✦&nbsp;&nbsp;Super Rod &nbsp;·&nbsp; Brusanica &nbsp;·&nbsp; Office of the Director-General&nbsp;&nbsp;✦
+        </div>
+
+        <div class="doc-header-seal-row">
+          <!-- Left seal SVG -->
+          <svg class="doc-header-seal" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="26" cy="26" r="24" fill="none" stroke="#B8860B" stroke-width="1.5"/>
+            <circle cx="26" cy="26" r="20" fill="rgba(122,0,0,.12)" stroke="#8A6400" stroke-width=".8"/>
+            <path d="M26,8 L34,18 L34,36 Q34,44 26,47 Q18,44 18,36 L18,18Z" fill="rgba(122,0,0,.85)" stroke="#D4A017" stroke-width="1.2"/>
+            <path d="M26,11 L31,19 L31,35 Q31,41 26,44 Q21,41 21,35 L21,19Z" fill="none" stroke="#8A6400" stroke-width=".6"/>
+            <line x1="26" y1="15" x2="26" y2="40" stroke="#D4A017" stroke-width="2" stroke-linecap="round"/>
+            <line x1="21" y1="19" x2="31" y2="19" stroke="#D4A017" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="26" cy="15" r="2.2" fill="#D4A017"/>
+            <polygon points="20,40 26,44 32,40" fill="#D4A017"/>
+            <line x1="18" y1="27" x2="34" y2="35" stroke="#D4A017" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="34" y1="27" x2="18" y2="35" stroke="#D4A017" stroke-width="1.8" stroke-linecap="round"/>
+            <text x="26" y="6" text-anchor="middle" font-size="6" fill="#B8860B" font-family="serif">★</text>
+            <text x="46" y="28" text-anchor="middle" font-size="6" fill="#B8860B" font-family="serif">★</text>
+            <text x="6" y="28" text-anchor="middle" font-size="6" fill="#B8860B" font-family="serif">★</text>
+          </svg>
+
+          <div class="doc-header-center">
+            <div class="office-title">Office of the Director-General</div>
+            <div class="office-sub">High Command · Fort Rodium · Brusanica</div>
+          </div>
+
+          <!-- Right seal SVG (mirror) -->
+          <svg class="doc-header-seal" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="26" cy="26" r="24" fill="none" stroke="#B8860B" stroke-width="1.5"/>
+            <circle cx="26" cy="26" r="20" fill="rgba(122,0,0,.12)" stroke="#8A6400" stroke-width=".8"/>
+            <path d="M26,8 L34,18 L34,36 Q34,44 26,47 Q18,44 18,36 L18,18Z" fill="rgba(122,0,0,.85)" stroke="#D4A017" stroke-width="1.2"/>
+            <line x1="26" y1="15" x2="26" y2="40" stroke="#D4A017" stroke-width="2" stroke-linecap="round"/>
+            <line x1="21" y1="19" x2="31" y2="19" stroke="#D4A017" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="26" cy="15" r="2.2" fill="#D4A017"/>
+            <polygon points="20,40 26,44 32,40" fill="#D4A017"/>
+            <line x1="18" y1="27" x2="34" y2="35" stroke="#D4A017" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="34" y1="27" x2="18" y2="35" stroke="#D4A017" stroke-width="1.8" stroke-linecap="round"/>
+            <text x="26" y="6" text-anchor="middle" font-size="6" fill="#B8860B" font-family="serif">★</text>
+            <text x="46" y="28" text-anchor="middle" font-size="6" fill="#B8860B" font-family="serif">★</text>
+            <text x="6" y="28" text-anchor="middle" font-size="6" fill="#B8860B" font-family="serif">★</text>
+          </svg>
+        </div>
+
+        <!-- Meta fields -->
+        <div class="doc-header-meta">
+          <div class="meta-field"><span>TO:</span> <span id="d-to">—</span></div>
+          <div class="meta-field center"><span>SUBJECT:</span> <span id="d-subject">—</span></div>
+          <div class="meta-field right"><span>DATE:</span> <span id="d-date">—</span></div>
+
+          <div class="meta-field"><span>CC:</span> <span id="d-cc">—</span></div>
+          <div class="meta-field center"><span>FORT RODIUM · HIGH COMMAND</span></div>
+          <div class="meta-field right"><span>REF:</span> <span id="d-ref">—</span></div>
+        </div>
+
+        <div class="doc-header-class-row">
+          <div class="class-label">OFFICIAL CORRESPONDENCE · SUPER ROD</div>
+          <div class="classification-badge open" id="d-class-badge">OPEN</div>
+          <div class="class-label">BRUSANICA NATIONAL AUTHORITY</div>
+        </div>
+      </header>
+
+      <!-- BODY -->
+      <div class="doc-body">
+        <div class="doc-invocation">
+          In the name of the Grand Marshal, by the authority vested in the Office of High Command,
+          and in faithful service to the people of <strong>Brusanica</strong>:
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-section-heading"><span class="roman">I.</span> Proclamation / Decree / Order</div>
+          <div class="doc-section-content empty" id="d-s1">— Awaiting the Marshal's word —</div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-section-heading"><span class="roman">II.</span> Justification &amp; Authority</div>
+          <div class="doc-section-content empty" id="d-s2">— Awaiting the Marshal's word —</div>
+        </div>
+
+        <div class="doc-section">
+          <div class="doc-section-heading"><span class="roman">III.</span> Orders to be Carried Out</div>
+          <div class="doc-section-content empty" id="d-s3">— Awaiting the Marshal's word —</div>
+        </div>
+
+        <div class="doc-section" id="d-s4-section">
+          <div class="doc-section-heading"><span class="roman">IV.</span> Additional Notes</div>
+          <div class="doc-section-content empty" id="d-s4">— Awaiting the Marshal's word —</div>
+        </div>
+
+        <!-- Signature -->
+        <div class="doc-signature">
+          <div class="doc-signature-inner">
+            <div class="doc-sig-issued">Issued from Fort Rodium, Brusanica</div>
+            <div class="doc-sig-date" id="d-sig-date">On this day: —</div>
+            <div class="doc-sig-line"></div>
+            <div class="doc-sig-name" id="d-marshal">Grand Marshal of Brusanica</div>
+            <div class="doc-sig-title">Supreme Commander, The Liberators<br>Office of High Command, Fort Rodium</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="doc-footer">
+        <div class="doc-footer-top-rule"></div>
+        <div class="doc-footer-gold-rule"></div>
+        <div class="doc-footer-row">
+          <div class="doc-footer-motto">✦ VETH RODAK ENDURAL ✦</div>
+          <div class="doc-footer-page">Page 1 of 1</div>
+          <div class="doc-footer-official">SUPER ROD · OFFICIAL USE ONLY</div>
+        </div>
+        <div class="doc-footer-sigs">
+          <div class="doc-footer-sig-field">Grand Marshal's Signature: _______________________</div>
+          <div class="doc-footer-sig-field" style="text-align:right">Director-General Nick: _______________________</div>
+        </div>
+        <div class="doc-footer-authority">
+          This document carries the full authority of the Office of the Grand Marshal, Brusanica.
+          Unauthorized reproduction is punishable under SSD Directive IX.
+        </div>
+        <div class="doc-footer-bottom-rule"></div>
+      </footer>
+
+    </div><!-- #document -->
+  </main>
+
+</div><!-- .layout -->
+
+<script>
+// ── Live update ──
+const fields = {
+  'f-to':      () => update('d-to',      'f-to',      '—'),
+  'f-cc':      () => update('d-cc',      'f-cc',      '—'),
+  'f-subject': () => update('d-subject', 'f-subject', '—'),
+  'f-ref':     () => update('d-ref',     'f-ref',     '—'),
+  'f-date':    () => { update('d-date', 'f-date', '—'); updateSigDate(); },
+  'f-marshal': () => update('d-marshal', 'f-marshal', 'Grand Marshal of Brusanica'),
+  'f-class':   () => updateClass(),
+  'f-s1': () => updateSection('d-s1', 'f-s1'),
+  'f-s2': () => updateSection('d-s2', 'f-s2'),
+  'f-s3': () => updateSection('d-s3', 'f-s3'),
+  'f-s4': () => updateSection('d-s4', 'f-s4'),
+};
+
+Object.keys(fields).forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', fields[id]);
+});
+
+function update(targetId, sourceId, fallback) {
+  const val = document.getElementById(sourceId)?.value?.trim();
+  const target = document.getElementById(targetId);
+  if (!target) return;
+  target.textContent = val || fallback;
+}
+
+function updateSection(targetId, sourceId) {
+  const val = document.getElementById(sourceId)?.value?.trim();
+  const target = document.getElementById(targetId);
+  if (!target) return;
+  if (val) {
+    target.textContent = val;
+    target.classList.remove('empty');
+  } else {
+    target.textContent = '— Awaiting the Marshal\'s word —';
+    target.classList.add('empty');
+  }
+}
+
+function updateSigDate() {
+  const val = document.getElementById('f-date')?.value?.trim();
+  document.getElementById('d-sig-date').textContent = val
+    ? 'On this day: ' + val
+    : 'On this day: —';
+}
+
+function updateClass() {
+  const val = document.getElementById('f-class').value;
+  const badge = document.getElementById('d-class-badge');
+  badge.className = 'classification-badge ' + val;
+  const labels = { open: 'OPEN', restricted: 'RESTRICTED', 'eyes-only': 'EYES ONLY' };
+  badge.textContent = labels[val];
+}
+
+function reset() {
+  ['f-to','f-cc','f-subject','f-ref','f-date','f-s1','f-s2','f-s3','f-s4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-marshal').value = 'Grand Marshal of Brusanica';
+  document.getElementById('f-class').value = 'open';
+  Object.keys(fields).forEach(id => fields[id]());
+}
+
+// ── Screenshot capture ──
+async function capture() {
+  const btn = event.target;
+  btn.classList.add('busy');
+  btn.textContent = '⏳ RENDERING…';
+
+  try {
+    const doc = document.getElementById('document');
+    const canvas = await html2canvas(doc, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#F5EDD8',
+      logging: false,
+      windowWidth: doc.offsetWidth,
+      windowHeight: doc.offsetHeight,
+    });
+
+    const subj = document.getElementById('f-subject').value.trim().replace(/\s+/g,'-').toLowerCase() || 'decree';
+    const link = document.createElement('a');
+    link.download = `superrod-decree-${subj}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e) {
+    alert('Capture failed: ' + e.message);
+  } finally {
+    btn.classList.remove('busy');
+    btn.textContent = '📸 GENERATE & DOWNLOAD';
+  }
+}
+</script>
+</body>
+</html>

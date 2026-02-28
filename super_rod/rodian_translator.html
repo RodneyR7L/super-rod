@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rodian Translator — Brusanica</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=IM+Fell+English:ital@0;1&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060200;--s1:#100600;--s2:#1A0A00;
+  --cr:#8B0000;--rd:#A80000;--gd:#B8860B;--bg2:#D4A017;
+  --pg:#E8D080;--ink:#F0E4C0;--mt:#7A6030;--dm:#3A2010;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse 110% 45% at 50% 0%,rgba(100,20,0,.35) 0%,transparent 55%),
+    repeating-linear-gradient(0deg,rgba(255,200,50,.018) 0,rgba(255,200,50,.018) 1px,transparent 1px,transparent 52px),
+    repeating-linear-gradient(90deg,rgba(255,200,50,.018) 0,rgba(255,200,50,.018) 1px,transparent 1px,transparent 52px);
+  color:var(--ink);font-family:'IM Fell English',Georgia,serif;min-height:100vh;
+}
+
+/* ─── HEADER ─── */
+.hdr{
+  background:linear-gradient(180deg,#150600,#0A0200);
+  border-bottom:3px solid var(--cr);
+  padding:22px 20px 16px;text-align:center;position:relative;
+}
+.hdr::after{
+  content:'';position:absolute;bottom:-6px;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gd) 20%,var(--bg2) 50%,var(--gd) 80%,transparent);
+}
+.hdr h1{
+  font-family:'Cinzel Decorative',serif;
+  font-size:clamp(1.3rem,4vw,2.4rem);
+  color:var(--bg2);letter-spacing:.1em;
+  text-shadow:0 0 40px rgba(212,160,23,.4),0 2px 0 rgba(0,0,0,.5);
+  margin-bottom:5px;
+}
+.hdr-sub{font-family:'Special Elite',monospace;font-size:.62rem;letter-spacing:.5em;color:var(--mt);}
+.hdr-rule{height:1px;background:linear-gradient(90deg,transparent,var(--cr) 20%,var(--gd) 50%,var(--cr) 80%,transparent);margin:10px auto 0;width:70%;}
+
+/* ─── MAIN ─── */
+.main{max-width:960px;margin:0 auto;padding:32px 18px 60px;display:flex;flex-direction:column;gap:22px;}
+
+/* ─── CARD ─── */
+.card{
+  background:var(--s1);
+  border:1px solid rgba(184,134,11,.18);
+  padding:22px 24px;position:relative;
+}
+.card-corner{position:absolute;width:14px;height:14px;}
+.card-corner.tl{top:-1px;left:-1px;border-top:2px solid var(--gd);border-left:2px solid var(--gd);}
+.card-corner.tr{top:-1px;right:-1px;border-top:2px solid var(--gd);border-right:2px solid var(--gd);}
+.card-corner.bl{bottom:-1px;left:-1px;border-bottom:2px solid var(--gd);border-left:2px solid var(--gd);}
+.card-corner.br{bottom:-1px;right:-1px;border-bottom:2px solid var(--gd);border-right:2px solid var(--gd);}
+
+.card-title{
+  font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.32em;
+  color:var(--bg2);text-transform:uppercase;
+  margin-bottom:16px;padding-bottom:9px;
+  border-bottom:1px solid rgba(184,134,11,.22);
+}
+
+/* ─── DIRECTION TOGGLE ─── */
+.dir-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.dir-toggle{display:flex;border:1px solid rgba(184,134,11,.3);overflow:hidden;}
+.dir-btn{
+  font-family:'Special Elite',monospace;font-size:.66rem;letter-spacing:.18em;
+  padding:8px 18px;cursor:pointer;border:none;text-transform:uppercase;
+  background:transparent;color:var(--mt);transition:all .18s;white-space:nowrap;
+}
+.dir-btn.active{background:var(--cr);color:var(--pg);}
+.dir-btn:hover:not(.active){background:rgba(139,0,0,.28);color:var(--pg);}
+.dir-sep{
+  background:rgba(184,134,11,.2);color:var(--gd);
+  font-size:.9rem;padding:8px 7px;display:flex;align-items:center;
+}
+.dir-note{font-family:'Special Elite',monospace;font-size:.58rem;letter-spacing:.18em;color:var(--dm);font-style:italic;}
+
+/* ─── TRANSLATE AREAS ─── */
+.ta-wrap{display:grid;grid-template-columns:1fr 40px 1fr;gap:8px;align-items:start;}
+@media(max-width:600px){.ta-wrap{grid-template-columns:1fr;}}
+.ta-label{
+  font-family:'Special Elite',monospace;font-size:.58rem;letter-spacing:.38em;
+  color:var(--mt);text-transform:uppercase;margin-bottom:5px;
+}
+textarea{
+  width:100%;min-height:150px;
+  background:rgba(4,1,0,.75);border:1px solid rgba(184,134,11,.22);
+  color:var(--pg);font-family:'IM Fell English',Georgia,serif;
+  font-size:1rem;line-height:1.72;padding:12px 14px;
+  outline:none;resize:vertical;transition:border-color .2s;
+}
+textarea:focus{border-color:rgba(184,134,11,.6);}
+textarea.output{
+  color:var(--bg2);background:rgba(6,2,0,.85);
+  font-style:italic;cursor:default;
+}
+textarea::placeholder{color:rgba(122,96,48,.4);font-style:italic;}
+.ta-arrow{
+  display:flex;align-items:center;justify-content:center;
+  padding-top:24px;font-size:1.5rem;color:var(--gd);
+}
+@media(max-width:600px){.ta-arrow{display:none;}}
+
+/* ─── BUTTONS ─── */
+.btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.btn{
+  font-family:'Special Elite',monospace;font-size:.64rem;letter-spacing:.26em;
+  padding:9px 20px;cursor:pointer;border:1px solid;text-transform:uppercase;
+  transition:all .18s;
+  clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,7px 100%,0 50%);
+}
+.btn-p{background:var(--cr);border-color:var(--gd);color:var(--pg);}
+.btn-p:hover{background:var(--rd);}
+.btn-g{background:transparent;border-color:rgba(184,134,11,.32);color:var(--mt);}
+.btn-g:hover{border-color:var(--gd);color:var(--bg2);}
+
+/* ─── UNKNOWN WORDS NOTICE ─── */
+.notice{
+  margin-top:8px;padding:7px 12px;
+  background:rgba(20,8,0,.7);border-left:2px solid var(--gd);
+  font-family:'Special Elite',monospace;font-size:.6rem;letter-spacing:.1em;
+  color:rgba(212,160,23,.65);display:none;
+}
+
+/* ─── DICTIONARY ─── */
+.dict-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.srch{
+  flex:1;min-width:160px;
+  background:rgba(4,1,0,.75);border:1px solid rgba(184,134,11,.22);
+  color:var(--pg);font-family:'IM Fell English',serif;font-size:.9rem;
+  padding:7px 12px;outline:none;transition:border-color .2s;
+}
+.srch:focus{border-color:rgba(184,134,11,.6);}
+.dict-count{font-family:'Special Elite',monospace;font-size:.58rem;letter-spacing:.22em;color:var(--dm);white-space:nowrap;}
+
+.dict-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px;
+  max-height:380px;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:var(--cr) rgba(8,3,0,.5);
+}
+.dict-grid::-webkit-scrollbar{width:4px}
+.dict-grid::-webkit-scrollbar-thumb{background:var(--cr);}
+
+.de{
+  background:rgba(6,2,0,.6);border:1px solid rgba(184,134,11,.09);
+  padding:7px 10px;cursor:pointer;transition:all .14s;
+}
+.de:hover{border-color:rgba(184,134,11,.38);background:rgba(12,5,0,.8);}
+.de .en{font-family:'Special Elite',monospace;font-size:.68rem;color:var(--mt);letter-spacing:.04em;}
+.de .rod{font-family:'IM Fell English',serif;font-style:italic;font-size:.95rem;color:var(--bg2);margin-top:1px;}
+
+/* ─── GRAMMAR CARD ─── */
+.grammar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
+.gb{background:rgba(6,2,0,.6);border:1px solid rgba(184,134,11,.1);padding:13px 15px;}
+.gb h3{
+  font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.25em;color:var(--cr);
+  text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;
+  border-bottom:1px solid rgba(139,0,0,.3);
+}
+.gi{display:flex;gap:8px;margin-bottom:5px;font-size:.84rem;line-height:1.4;}
+.gk{color:var(--gd);font-style:italic;min-width:80px;flex-shrink:0;font-size:.78rem;}
+.gv{color:var(--ink);font-size:.8rem;}
+
+/* ─── LOOKUP ─── */
+.lookup-row{display:flex;gap:8px;margin-bottom:14px;}
+.lookup-result{
+  padding:14px 16px;background:rgba(6,2,0,.7);border:1px solid rgba(184,134,11,.14);
+  min-height:64px;display:none;
+}
+.lookup-result.on{display:block;}
+.lr-en{font-family:'Cinzel',serif;font-size:1rem;color:var(--pg);font-weight:600;}
+.lr-rod{font-family:'IM Fell English',serif;font-style:italic;font-size:1.5rem;color:var(--bg2);margin:3px 0;text-shadow:0 0 18px rgba(212,160,23,.22);}
+.lr-note{font-family:'Special Elite',monospace;font-size:.6rem;letter-spacing:.2em;color:var(--cr);}
+
+/* ─── TABS ─── */
+.tabs{display:flex;gap:0;border-bottom:1px solid rgba(184,134,11,.22);margin-bottom:18px;}
+.tab{
+  font-family:'Special Elite',monospace;font-size:.64rem;letter-spacing:.2em;
+  padding:8px 18px;cursor:pointer;border:none;background:transparent;
+  color:var(--mt);text-transform:uppercase;border-bottom:2px solid transparent;
+  transition:all .18s;margin-bottom:-1px;
+}
+.tab.active{color:var(--bg2);border-bottom-color:var(--gd);}
+.tab:hover:not(.active){color:var(--pg);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ─── PHRASES ─── */
+.phrases-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;}
+.pc{
+  background:rgba(6,2,0,.6);border:1px solid rgba(184,134,11,.1);
+  padding:10px 13px;cursor:pointer;transition:border-color .14s;
+}
+.pc:hover{border-color:rgba(184,134,11,.35);}
+.pc .p-en{font-family:'Special Elite',monospace;font-size:.68rem;color:var(--mt);letter-spacing:.05em;margin-bottom:3px;}
+.pc .p-rod{font-family:'IM Fell English',serif;font-style:italic;font-size:1rem;color:var(--bg2);}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-rule" style="margin-bottom:12px;margin-top:0"></div>
+  <h1>⚔ RODIAN TRANSLATOR ⚔</h1>
+  <div class="hdr-sub">Official Language of Super Rod · Brusanica · Fort Rodium</div>
+  <div class="hdr-rule"></div>
+</header>
+
+<div class="main">
+
+  <!-- ═══ TRANSLATOR CARD ═══ -->
+  <div class="card">
+    <div class="card-corner tl"></div><div class="card-corner tr"></div>
+    <div class="card-corner bl"></div><div class="card-corner br"></div>
+    <div class="card-title">⚔ Translate</div>
+
+    <div class="dir-row">
+      <div class="dir-toggle">
+        <button class="dir-btn active" id="btn-en-rod" onclick="setDir('en-rod')">English</button>
+        <div class="dir-sep">→</div>
+        <button class="dir-btn" id="btn-rod-en" onclick="setDir('rod-en')">Rodian</button>
+      </div>
+      <button class="btn btn-g" onclick="swapDir()">⇄ Swap</button>
+      <div class="dir-note">Capitalized words = proper names, passed through unchanged</div>
+    </div>
+
+    <div class="ta-wrap">
+      <div>
+        <div class="ta-label" id="lbl-input">English Input</div>
+        <textarea id="input-text" placeholder="Type anything in English…" oninput="liveTranslate()"></textarea>
+      </div>
+      <div class="ta-arrow">⟶</div>
+      <div>
+        <div class="ta-label" id="lbl-output">Rodian Output</div>
+        <textarea id="output-text" class="output" readonly placeholder="Translation appears here…"></textarea>
+      </div>
+    </div>
+
+    <div class="notice" id="notice"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="liveTranslate()">⚔ Translate</button>
+      <button class="btn btn-g" onclick="copyOutput()">⎘ Copy Result</button>
+      <button class="btn btn-g" onclick="clearAll()">✕ Clear</button>
+    </div>
+  </div>
+
+  <!-- ═══ WORD LOOKUP CARD ═══ -->
+  <div class="card">
+    <div class="card-corner tl"></div><div class="card-corner tr"></div>
+    <div class="card-corner bl"></div><div class="card-corner br"></div>
+    <div class="card-title">◆ Single Word Lookup</div>
+    <div class="lookup-row">
+      <input class="srch" type="text" id="lookup-input" placeholder="Type any word…" oninput="lookupWord(this.value)" style="flex:1">
+      <div class="dir-toggle" style="flex-shrink:0">
+        <button class="dir-btn active" id="lu-en" onclick="setLookupDir('en')">EN→ROD</button>
+        <button class="dir-btn" id="lu-rod" onclick="setLookupDir('rod')">ROD→EN</button>
+      </div>
+    </div>
+    <div class="lookup-result" id="lookup-result">
+      <div class="lr-en" id="lr-en"></div>
+      <div class="lr-rod" id="lr-rod"></div>
+      <div class="lr-note" id="lr-note"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TABS: DICTIONARY / GRAMMAR / PHRASES ═══ -->
+  <div class="card">
+    <div class="card-corner tl"></div><div class="card-corner tr"></div>
+    <div class="card-corner bl"></div><div class="card-corner br"></div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('dict')">◆ Dictionary</button>
+      <button class="tab" onclick="showTab('grammar')">◆ Grammar</button>
+      <button class="tab" onclick="showTab('phrases')">◆ Common Phrases</button>
+    </div>
+
+    <!-- DICTIONARY -->
+    <div class="tab-panel active" id="tab-dict">
+      <div class="dict-controls">
+        <input class="srch" type="text" id="dict-search" placeholder="Filter dictionary…" oninput="filterDict(this.value)">
+        <div class="dict-count" id="dict-count"></div>
+      </div>
+      <div class="dict-grid" id="dict-grid"></div>
+    </div>
+
+    <!-- GRAMMAR -->
+    <div class="tab-panel" id="tab-grammar">
+      <div class="grammar-grid">
+        <div class="gb">
+          <h3>Phonology</h3>
+          <div class="gi"><span class="gk">Consonants</span><span class="gv">v, th, r, d, k, n, s, z, m, br, gr, tr, dr, sk, st, nd</span></div>
+          <div class="gi"><span class="gk">Vowels</span><span class="gv">a, e, i, o, u, au, ae, ur, ei</span></div>
+          <div class="gi"><span class="gk">Syllables</span><span class="gv">CV, CVC, CCVC, CVV</span></div>
+          <div class="gi"><span class="gk">Feel</span><span class="gv">Hard, guttural. Clusters like dr-, sk-, br- are prestigious.</span></div>
+        </div>
+        <div class="gb">
+          <h3>Verbs</h3>
+          <div class="gi"><span class="gk">Infinitive</span><span class="gv">-ak suffix (skaevak = to defend)</span></div>
+          <div class="gi"><span class="gk">Past</span><span class="gv">-aed suffix (skaevaed = defended)</span></div>
+          <div class="gi"><span class="gk">Future</span><span class="gv">-ul suffix (skaevul = will defend)</span></div>
+          <div class="gi"><span class="gk">Command</span><span class="gv">-OD suffix, caps (skaevOD = DEFEND!)</span></div>
+        </div>
+        <div class="gb">
+          <h3>Nouns</h3>
+          <div class="gi"><span class="gk">Plural</span><span class="gv">-ar suffix (drauthak → drauthakr)</span></div>
+          <div class="gi"><span class="gk">Possessive</span><span class="gv">-veth suffix = "of the"</span></div>
+          <div class="gi"><span class="gk">Definite</span><span class="gv">veth = the</span></div>
+          <div class="gi"><span class="gk">Indefinite</span><span class="gv">dra = a / an</span></div>
+        </div>
+        <div class="gb">
+          <h3>Prefixes</h3>
+          <div class="gi"><span class="gk">und-</span><span class="gv">not / anti / un-</span></div>
+          <div class="gi"><span class="gk">skael-</span><span class="gv">great / high / supreme</span></div>
+          <div class="gi"><span class="gk">vraud-</span><span class="gv">very / extremely</span></div>
+          <div class="gi"><span class="gk">dra-</span><span class="gv">small / young / lesser</span></div>
+        </div>
+        <div class="gb">
+          <h3>Syntax</h3>
+          <div class="gi"><span class="gk">Word order</span><span class="gv">Subject-Verb-Object</span></div>
+          <div class="gi"><span class="gk">Adjectives</span><span class="gv">Before the noun</span></div>
+          <div class="gi"><span class="gk">Questions</span><span class="gv">Add rei at end of statement</span></div>
+          <div class="gi"><span class="gk">Names</span><span class="gv">Capitalized — never translated</span></div>
+        </div>
+        <div class="gb">
+          <h3>Sacred Words</h3>
+          <div class="gi"><span class="gk">veth</span><span class="gv">the / of the (most sacred)</span></div>
+          <div class="gi"><span class="gk">rodak</span><span class="gv">the rod — power & endurance</span></div>
+          <div class="gi"><span class="gk">endural</span><span class="gv">endures / eternal</span></div>
+          <div class="gi"><span class="gk">drauthak</span><span class="gv">liberator — highest title</span></div>
+          <div class="gi"><span class="gk">vreld</span><span class="gv">people / we / community</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHRASES -->
+    <div class="tab-panel" id="tab-phrases">
+      <div class="phrases-grid" id="phrases-grid"></div>
+    </div>
+  </div>
+
+</div><!-- .main -->
+
+<script>
+// ════════════════════════════════════════════════════════
+//  RODIAN LANGUAGE ENGINE
+//  Deterministic word generation from hash — every English
+//  word always maps to the same Rodian word, forever.
+//  Capitalized words are proper names and pass through unchanged.
+// ════════════════════════════════════════════════════════
+
+// ── Phonology building blocks ──
+const ONSET = ['v','th','r','d','k','n','s','z','m','br','gr','tr','dr','sk','st','nd','ld','vr','sk','dr','th','vel','veld','skau','dra'];
+const ONSET_S = ['v','r','d','k','n','s','z','m','th','l','gr','tr','dr'];
+const VOWEL = ['a','e','i','o','u','au','ae','ur','ei','ael','aur'];
+const VOWEL_S = ['a','e','i','o','u'];
+const CODA  = ['k','d','n','r','s','m','th','l','nd','ld','sk','rd','vel','veth'];
+const CODA_S = ['k','d','n','r','s','m'];
+
+// ── Seeded RNG from a string (deterministic) ──
+function hashStr(str) {
+  // DJB2 hash
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) + h) + str.charCodeAt(i);
+    h = h & 0xFFFFFFFF;
+  }
+  return Math.abs(h);
+}
+
+function seededRand(seed) {
+  // LCG
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xFFFFFFFF;
+    return (s >>> 0) / 0xFFFFFFFF;
+  };
+}
+
+function pick(arr, rng) {
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+// ── Generate a Rodian word from an English word ──
+// Same English word ALWAYS produces the same Rodian word.
+function generateWord(english) {
+  const key = english.toLowerCase().trim();
+  const seed = hashStr(key);
+  const rng = seededRand(seed);
+
+  // Decide syllable count based on English word length
+  const len = key.length;
+  let nSyl;
+  if (len <= 3)       nSyl = 1;
+  else if (len <= 6)  nSyl = rng() > 0.3 ? 2 : 1;
+  else if (len <= 10) nSyl = rng() > 0.4 ? 2 : 3;
+  else                nSyl = rng() > 0.5 ? 3 : 2;
+
+  const syllables = [];
+  for (let i = 0; i < nSyl; i++) {
+    const style = pick(['CV','CVC','CCVC','CVV','CV'], rng);
+    let syl = '';
+    if (style === 'CV') {
+      syl = pick(ONSET_S, rng) + pick(VOWEL_S, rng);
+    } else if (style === 'CVC') {
+      syl = pick(ONSET_S, rng) + pick(VOWEL_S, rng) + pick(CODA_S, rng);
+    } else if (style === 'CCVC') {
+      syl = pick(ONSET, rng) + pick(VOWEL_S, rng) + pick(CODA_S, rng);
+    } else if (style === 'CVV') {
+      syl = pick(ONSET_S, rng) + pick(VOWEL, rng);
+    }
+    syllables.push(syl);
+  }
+
+  // Join syllables, sometimes with hyphen for compound feel
+  let word = '';
+  for (let i = 0; i < syllables.length; i++) {
+    if (i > 0 && rng() > 0.65 && nSyl > 1) word += '-';
+    word += syllables[i];
+  }
+
+  return word;
+}
+
+// ── Hand-crafted core lexicon (always overrides algorithm) ──
+const CORE = {
+  // Grammar
+  "the":"veth","a":"dra","an":"dra","of":"thae","and":"und","or":"aev",
+  "but":"skur","not":"und","no":"undra","yes":"zael","is":"zak","are":"zakar",
+  "was":"zakaed","will":"zakul","in":"vur","on":"drak","at":"rei","to":"thr",
+  "for":"draem","with":"skav","from":"vreth","by":"stael","this":"daek",
+  "that":"draek","all":"veld","every":"veldar","my":"vrael","our":"vraelor",
+  "your":"skaer","their":"thraer","he":"ven","she":"vein","they":"venar",
+  "we":"vreld","i":"vre","you":"skae","it":"drek","who":"vrak",
+  "what":"drakei","when":"thael","where":"vraeldrak","why":"skurei",
+  "how":"naed","if":"grael","then":"thraed","now":"draen",
+  "never":"undthael","always":"veldthael","here":"draev","there":"thraev",
+  "more":"skael","less":"undskael","very":"vraud","so":"draekul",
+  "be":"zak","been":"zakaed","being":"zakar","have":"vel","has":"vel",
+  "had":"velaed","do":"drak","does":"drak","did":"drakaed","can":"skauvel",
+  "could":"skauvelaed","would":"zulvel","should":"velod","may":"drael",
+  "might":"draelaed","must":"velod","shall":"zakul","then":"thraed",
+  "also":"velund","only":"veld-dra","even":"skaurel","just":"draevel",
+  "still":"vel-thael","already":"draen-vel","yet":"thraev-und",
+  "again":"vreth-draen","too":"skav-vel","up":"skael-drak","down":"und-drak",
+  "out":"vreth","back":"vreth-vel","after":"thraed-vel","before":"vel-thael",
+  "between":"vur-vel","through":"vreth-vur","over":"skael-vur","under":"und-vur",
+
+  // Super Rod specific
+  "super rod":"Brusanica","brusanica":"Brusanica","fort rodium":"Veth-Rodakur",
+  "the rod":"Veth-Rodak","rod":"rodak","liberator":"drauthak","liberators":"drauthakr",
+  "grand marshal":"Skael-Drauthak","marshal":"drauthakvel","high command":"Skael-Veldar",
+  "ssd":"Veth-Skauer","iron vault":"Veth-Skaur","division":"skauvel",
+  "people's bureau":"Drauthveld Vrael",
+
+  // Military
+  "war":"skaurak","battle":"drausk","army":"vel-drauthakr","soldier":"drauthvel",
+  "enemy":"undrak","victory":"skaeldrausk","defeat":"undradrausk",
+  "weapon":"drauvel","sword":"drauv","shield":"skaevel","armor":"velskaev",
+  "fortress":"vethskauer","wall":"skauveth","march":"draemar","attack":"drauskar",
+  "defend":"skaevak","conquer":"skaeldrak","retreat":"unddraemar",
+  "surrender":"undskaev","rank":"draevel","order":"velodak","command":"skaelak",
+  "duty":"draeveld","mission":"draesk","patrol":"skauvel","siege":"velundrak",
+  "invasion":"undrakvur","defend":"skaevak","strength":"skaelvel",
+  "honor":"draevelskae","glory":"skaeldraev","loyalty":"veldraeveld",
+  "treason":"undvel","traitor":"undveldrak","courage":"skaeldra",
+  "fear":"undskael","unity":"velvreld","sacrifice":"unddrael",
+  "freedom":"draelvel","oath":"veldraeveld","blood":"draelskau",
+  "iron":"skaur","flame":"skaurak","endure":"endurak","endures":"endural",
+  "endurance":"endural",
+
+  // Resources
+  "diamond":"draukei","diamonds":"draukr","gold":"skaurei","wood":"vreldak",
+  "stone":"veldrak","block":"drakvel","build":"veldraek","mine":"undrakvel",
+  "forge":"skaurvel","craft":"veldraev","resource":"veldraek",
+
+  // Common phrases (matched as whole phrases first)
+  "the rod endures":"Veth Rodak Endural",
+  "hail super rod":"Skael Brusanica",
+  "hail brusanica":"Skael Brusanica",
+  "iron and flame":"skaur und skaurak",
+  "never yield":"und-thael vel-und",
+  "eyes everywhere":"skaurar vel-thraev",
+  "stand firm":"veldrak vraud",
+  "death or glory":"undvel aev skaeldraev",
+  "by order of the grand marshal":"stael velodak thae Skael-Drauthak",
+  "for glory":"draem skaeldraev",
+  "for honor":"draem draevelskae",
+  "rise up":"skaeldrak draen",
+  "hold the line":"velskauvel veth skauveth",
+  "eyes only":"skaurar veld",
+  "we are one":"vreld zakar vel",
+  "every citizen a soldier":"veldar veldrak dra drauthvel",
+};
+
+// ── Reverse lookup cache (Rodian → English) ──
+// Built from CORE + will fall back to reverse-engineering generated words
+const REVERSE_CORE = {};
+for (const [en, rod] of Object.entries(CORE)) {
+  const rodLow = rod.toLowerCase();
+  if (!REVERSE_CORE[rodLow]) REVERSE_CORE[rodLow] = en;
+}
+
+// ── Grammatical suffix/prefix rules ──
+const GRAMMAR = {
+  suffixes: {
+    'ing': w => generateWord(w) + 'ak',   // gerund → verb form
+    'ed':  w => generateWord(w) + 'aed',  // past tense
+    'er':  w => generateWord(w) + 'vel',  // agent/comparative
+    'est': w => 'skael-' + generateWord(w),// superlative
+    'ly':  w => generateWord(w) + 'draem', // adverb
+    'ful': w => generateWord(w) + 'vel',   // full of
+    'less':w => 'und-' + generateWord(w), // without
+    'ness':w => generateWord(w) + 'draev', // noun form
+    'tion':w => generateWord(w) + 'veld',  // noun form
+    'ment':w => generateWord(w) + 'veld',  // noun form
+    'ity': w => generateWord(w) + 'vel',   // quality
+    'ous': w => generateWord(w) + 'skael', // adjective
+    'ive': w => generateWord(w) + 'vel',   // adjective
+    'able':w => generateWord(w) + 'drak',  // can be done
+    'ible':w => generateWord(w) + 'drak',  // can be done
+    'al':  w => generateWord(w) + 'vel',   // relating to
+    'ic':  w => generateWord(w) + 'veld',  // of/relating to
+    's':   w => generateWord(w) + 'ar',    // plural
+    'es':  w => generateWord(w) + 'ar',    // plural
+  },
+  prefixes: {
+    'un': w => 'und-' + translateWord(w),
+    'in': w => 'und-' + translateWord(w),
+    'im': w => 'und-' + translateWord(w),
+    'non':w => 'und-' + translateWord(w),
+    'anti':w=> 'und-' + translateWord(w),
+    'over':w=> 'skael-' + translateWord(w),
+    'super':w=>'skael-' + translateWord(w),
+    'hyper':w=>'vraud-' + translateWord(w),
+    're':  w => translateWord(w) + '-vreth',
+  }
+};
+
+// ── Translate a single word ──
+function translateWord(word) {
+  // 1. Pass through proper names (capitalized)
+  if (/^[A-Z]/.test(word) && word.length > 1) return word;
+
+  // 2. Pass through numbers
+  if (/^\d+$/.test(word)) return word;
+
+  // 3. Pass through punctuation-only tokens
+  if (/^[^a-zA-Z0-9]+$/.test(word)) return word;
+
+  const lower = word.toLowerCase();
+  const stripped = word.replace(/[^a-zA-Z'-]/g, '');
+  const strippedLow = stripped.toLowerCase();
+
+  // 4. Check core lexicon
+  if (CORE[strippedLow]) {
+    const rod = CORE[strippedLow];
+    return word.includes("'s") ? rod + 'veth' : rod;
+  }
+
+  // 5. Try grammatical suffix stripping
+  for (const [suffix, transform] of Object.entries(GRAMMAR.suffixes)) {
+    if (strippedLow.endsWith(suffix) && strippedLow.length > suffix.length + 2) {
+      const stem = strippedLow.slice(0, -suffix.length);
+      if (CORE[stem]) return transform(stem);
+      // If stem is a real word pattern, still apply morphology
+      if (stem.length > 2) return transform(stem);
+    }
+  }
+
+  // 6. Try grammatical prefix stripping
+  for (const [prefix, transform] of Object.entries(GRAMMAR.prefixes)) {
+    if (strippedLow.startsWith(prefix) && strippedLow.length > prefix.length + 2) {
+      const stem = strippedLow.slice(prefix.length);
+      return transform(stem);
+    }
+  }
+
+  // 7. Pure algorithmic generation — deterministic, always same result
+  return generateWord(strippedLow);
+}
+
+// ── Translate Rodian back to English ──
+function translateRodian(word) {
+  // Pass through capitalized (proper names)
+  if (/^[A-Z]/.test(word) && word.length > 1) return word;
+  if (/^[^a-zA-Z0-9]+$/.test(word)) return word;
+  if (/^\d+$/.test(word)) return word;
+
+  const lower = word.toLowerCase().replace(/-/g,'');
+
+  // Check reverse core
+  if (REVERSE_CORE[lower]) return REVERSE_CORE[lower];
+  if (REVERSE_CORE[word.toLowerCase()]) return REVERSE_CORE[word.toLowerCase()];
+
+  // Check with hyphens intact
+  const withHyphen = word.toLowerCase();
+  if (REVERSE_CORE[withHyphen]) return REVERSE_CORE[withHyphen];
+
+  // Try suffix stripping for Rodian morphology → English
+  if (lower.endsWith('aed'))   return '[past: ' + lower.slice(0,-3) + ']';
+  if (lower.endsWith('ar'))    return '[plural: ' + lower.slice(0,-2) + ']';
+  if (lower.endsWith('veth'))  return '[of: ' + lower.slice(0,-4) + ']';
+  if (lower.endsWith('ak'))    return '[to: ' + lower.slice(0,-2) + ']';
+  if (lower.endsWith('ul'))    return '[will: ' + lower.slice(0,-2) + ']';
+  if (lower.startsWith('und')) return '[not: ' + lower.slice(3) + ']';
+  if (lower.startsWith('skael')) return '[great: ' + lower.slice(5) + ']';
+
+  // Unknown Rodian word
+  return '[' + word + ']';
+}
+
+// ── Translate a full sentence ──
+let currentDir = 'en-rod';
+let lookupDir = 'en';
+
+function tokenize(text) {
+  // Split preserving whitespace and punctuation as separate tokens
+  return text.match(/([A-Za-z''-]+|[^A-Za-z]+)/g) || [];
+}
+
+function translateText(text, dir) {
+  if (!text.trim()) return '';
+
+  if (dir === 'en-rod') {
+    // Sort multi-word phrases longest first so they get priority
+    const phrases = Object.keys(CORE)
+      .filter(k => k.includes(' '))
+      .sort((a, b) => b.length - a.length);
+
+    // Walk through text char by char, greedily matching phrases then words
+    let result = '';
+    let i = 0;
+    const lower = text.toLowerCase();
+
+    while (i < text.length) {
+      // Skip non-alpha characters (spaces, punctuation) — pass through as-is
+      if (!/[A-Za-z]/.test(text[i])) {
+        result += text[i];
+        i++;
+        continue;
+      }
+
+      // Try to match a multi-word phrase starting at i
+      let phraseMatched = false;
+      for (const phrase of phrases) {
+        if (lower.startsWith(phrase, i)) {
+          // Make sure it ends at a word boundary
+          const end = i + phrase.length;
+          if (end >= text.length || !/[A-Za-z]/.test(text[end])) {
+            result += CORE[phrase];
+            i = end;
+            phraseMatched = true;
+            break;
+          }
+        }
+      }
+      if (phraseMatched) continue;
+
+      // Extract a single word token
+      let j = i;
+      while (j < text.length && /[A-Za-z''-]/.test(text[j])) j++;
+      const word = text.slice(i, j);
+      result += translateWord(word);
+      i = j;
+    }
+    return result;
+
+  } else {
+    // Rodian → English: tokenize and translate each word
+    const tokens = tokenize(text);
+    return tokens.map(tok => {
+      if (/^[A-Za-z'-]+$/.test(tok)) return translateRodian(tok);
+      return tok;
+    }).join('');
+  }
+}
+
+function liveTranslate() {
+  const input = document.getElementById('input-text').value;
+  const output = translateText(input, currentDir);
+  document.getElementById('output-text').value = output;
+}
+
+function setDir(dir) {
+  currentDir = dir;
+  document.getElementById('btn-en-rod').classList.toggle('active', dir === 'en-rod');
+  document.getElementById('btn-rod-en').classList.toggle('active', dir === 'rod-en');
+  document.getElementById('lbl-input').textContent  = dir === 'en-rod' ? 'English Input' : 'Rodian Input';
+  document.getElementById('lbl-output').textContent = dir === 'en-rod' ? 'Rodian Output' : 'English Output';
+  document.getElementById('input-text').placeholder  = dir === 'en-rod' ? 'Type anything in English…' : 'Type in Rodian…';
+  document.getElementById('output-text').placeholder = dir === 'en-rod' ? 'Rodian translation appears here…' : 'English translation appears here…';
+  liveTranslate();
+}
+
+function swapDir() {
+  const inp = document.getElementById('input-text');
+  const out = document.getElementById('output-text');
+  const tmp = inp.value;
+  inp.value = out.value;
+  setDir(currentDir === 'en-rod' ? 'rod-en' : 'en-rod');
+  liveTranslate();
+}
+
+function copyOutput() {
+  const txt = document.getElementById('output-text').value;
+  if (!txt) return;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+function clearAll() {
+  document.getElementById('input-text').value = '';
+  document.getElementById('output-text').value = '';
+}
+
+// ── Single word lookup ──
+function setLookupDir(dir) {
+  lookupDir = dir;
+  document.getElementById('lu-en').classList.toggle('active', dir === 'en');
+  document.getElementById('lu-rod').classList.toggle('active', dir === 'rod');
+  const val = document.getElementById('lookup-input').value;
+  if (val) lookupWord(val);
+}
+
+function lookupWord(word) {
+  const result = document.getElementById('lookup-result');
+  if (!word.trim()) { result.classList.remove('on'); return; }
+
+  const w = word.trim();
+  if (lookupDir === 'en') {
+    const rod = translateWord(w);
+    const isCore = !!CORE[w.toLowerCase()];
+    document.getElementById('lr-en').textContent = w;
+    document.getElementById('lr-rod').textContent = rod;
+    document.getElementById('lr-note').textContent = isCore ? '◆ CORE LEXICON' : '◆ ALGORITHMICALLY GENERATED';
+  } else {
+    const eng = translateRodian(w);
+    document.getElementById('lr-en').textContent = eng;
+    document.getElementById('lr-rod').textContent = w;
+    document.getElementById('lr-note').textContent = REVERSE_CORE[w.toLowerCase()] ? '◆ CORE LEXICON' : '◆ RODIAN INPUT';
+  }
+  result.classList.add('on');
+}
+
+// ── Dictionary render ──
+function buildDict(filter = '') {
+  const grid = document.getElementById('dict-grid');
+  const f = filter.toLowerCase();
+  const entries = Object.entries(CORE)
+    .filter(([en, rod]) => !f || en.includes(f) || rod.toLowerCase().includes(f))
+    .sort((a,b) => a[0].localeCompare(b[0]));
+
+  document.getElementById('dict-count').textContent = entries.length + ' entries';
+
+  grid.innerHTML = entries.map(([en, rod]) => `
+    <div class="de" onclick="document.getElementById('input-text').value='${en.replace(/'/g,"\\'")}'; liveTranslate();">
+      <div class="en">${en}</div>
+      <div class="rod">${rod}</div>
+    </div>
+  `).join('');
+}
+
+function filterDict(val) { buildDict(val); }
+
+// ── Common phrases ──
+const PHRASES = [
+  ["The Rod Endures","Veth Rodak Endural"],
+  ["Hail Brusanica","Skael Brusanica"],
+  ["Iron and Flame","skaur und skaurak"],
+  ["Never Yield","und-thael vel-und"],
+  ["Eyes Everywhere","skaurar vel-thraev"],
+  ["Stand Firm","veldrak vraud"],
+  ["Death or Glory","undvel aev skaeldraev"],
+  ["For Glory","draem skaeldraev"],
+  ["For Honor","draem draevelskae"],
+  ["Every Citizen a Soldier","veldar veldrak dra drauthvel"],
+  ["Rise Up","skaeldrak draen"],
+  ["Hold the Line","velskauvel veth skauveth"],
+  ["We Are One","vreld zakar vel"],
+  ["Eyes Only","skaurar veld"],
+  ["By Order of the Grand Marshal","stael velodak thae Skael-Drauthak"],
+  ["The Rod Demands","Veth-Rodak veldraevoth"],
+  ["In the Name of Brusanica","vur veth draev thae Brusanica"],
+  ["Until Death","veldra undvel"],
+  ["Sworn to the Rod","vel-draeveld thr veth rodak"],
+  ["Liberators Rise","drauthakr skaeldrak"],
+  ["Fort Rodium Will Not Fall","Veth-Rodakur zakul und-drak"],
+  ["No Retreat No Surrender","undra unddraemar undra undskaev"],
+];
+
+function buildPhrases() {
+  const grid = document.getElementById('phrases-grid');
+  grid.innerHTML = PHRASES.map(([en, rod]) => `
+    <div class="pc" onclick="document.getElementById('input-text').value='${en.replace(/'/g,"\\'")}'; setDir('en-rod'); liveTranslate();">
+      <div class="p-en">${en}</div>
+      <div class="p-rod">${rod}</div>
+    </div>
+  `).join('');
+}
+
+// ── Tabs ──
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Init ──
+buildDict();
+buildPhrases();
+
+// Pre-fill a demo
+document.getElementById('input-text').value = 'The Rod endures. Never yield. Glory to Brusanica and all Liberators.';
+liveTranslate();
+</script>
+</body>
+</html>
